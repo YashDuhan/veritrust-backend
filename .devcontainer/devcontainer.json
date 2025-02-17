@@ -16,5 +16,5 @@
         }
     },
     "forwardPorts": [80],
-    "postCreateCommand": "pip install -r requirements.txt && echo 'Deployed Successfully'"
+    "postCreateCommand": "pip install -r requirements.txt && playwright install chromium && echo 'Deployed Successfully'"
 }

@@ -1,6 +1,12 @@
-from fastapi import UploadFile, File
+from fastapi import UploadFile, File, HTTPException
+from pydantic import BaseModel
 import os
 import base64
+from .url.url_logic import process_url_request
+
+# URL request model
+class URLRequest(BaseModel):
+    url: str
 
 # Default route
 async def root():
@@ -14,7 +20,7 @@ async def health_check():
 # Read the prompt template
 def load_prompt_template():
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    template_path = os.path.join(current_dir, 'template', 'check-image-prompt.md')
+    template_path = os.path.join(current_dir, 'template', 'check-image-prompt.txt')
     with open(template_path, 'r') as file:
         return file.read()
 
@@ -69,3 +75,11 @@ async def check_image(file: UploadFile = File(...)):
         
     except Exception as e:
         return {"extracted-text": f"Error: {str(e)}"}
+
+# URL route
+async def check_url(request: URLRequest):
+    try:
+        result = await process_url_request(request.dict())
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
