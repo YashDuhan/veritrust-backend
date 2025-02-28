@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, File
-from .endpoints import root, health_check, check_image, check_url,manual_check, check_raw
+from .endpoints import root, health_check, check_image, check_url,manual_check, check_raw ,suggestions, check_health
 
 app_router = APIRouter()
 
@@ -20,3 +20,9 @@ app_router.post("/manual-check")(manual_check)
 
 # Check Raw
 app_router.post("/check-raw")(check_raw)
+
+# Suggestions route
+app_router.post("/suggestions")(suggestions)
+
+# Check User's health
+app_router.post("/check-health")(check_health)
