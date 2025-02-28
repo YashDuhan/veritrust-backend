@@ -3,3 +3,7 @@ __pycache__/
 
 # Virtual Environment
 .env
+
+
+# system  config files 
+.idea 

@@ -4,6 +4,11 @@ import os
 import base64
 from .url.url_logic import process_url_request
 
+# Manual check model 
+class ManualInput(BaseModel):
+    claims: str 
+    ingredients: str 
+
 # URL request model
 class URLRequest(BaseModel):
     url: str
@@ -83,3 +88,119 @@ async def check_url(request: URLRequest):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+# Manual check route
+
+# Load the prompt template
+def load_prompt_Manual():
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    template_path = os.path.join(current_dir, 'template', 'manual-check-prompt.txt')
+    with open(template_path, 'r') as file:
+        return file.read()
+
+# Fetch result from the LLM 
+def send_to_llm(data:dict) ->str:
+    try :
+        from groq import Groq 
+        #  initialize Groq client
+
+        client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        # prompt for better result 
+        prompt = load_prompt_Manual()
+
+        messages= [
+            {
+                'role':'user',
+                'content': [
+                    {
+                        'type' : 'text' ,
+                        'text' :prompt
+                    },
+                    {
+                        'type' : 'text' ,
+                        'text' : data['claims']
+                    },
+                    {
+                        'type':'text',
+                        'text' : data['ingredients']
+                    }
+                ]
+            }
+        ]
+
+        completion =  client.chat.completions.create(
+            model= 'llama-3.2-90b-vision-preview',
+            messages=messages,
+            temperature=0,
+            max_completion_tokens=1024,
+            top_p=1 ,
+            stream=False,
+            stop = None
+        )
+
+        result  = completion.choices[0].message.content
+        return result
+
+    except Exception as e :
+        return f"Error : {str(e)}"
+    
+
+async def manual_check(manual_data: ManualInput):
+    try :
+        data = {
+            'claims' : manual_data.claims,
+            'ingredients' : manual_data.ingredients
+        }
+        result = send_to_llm(data)
+        return {"extracted-text": result}
+    except Exception as e:  
+        return {"extracted-text": f"Error: {str(e)}"}
+
+
+# Check Raw 
+# This is used to directly generate the response based on just the string
+# Works exactly like the manual 
+async def check_raw(raw_text: str):
+    try:
+        from groq import Groq
+        
+        # Initialize Groq client
+        client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        
+        # Load the prompt template (using the same as manual check)
+        prompt = load_prompt_Manual()
+        
+        # Set up messages with the raw text
+        messages = [
+            {
+                'role': 'user',
+                'content': [
+                    {
+                        'type': 'text',
+                        'text': prompt
+                    },
+                    {
+                        'type': 'text',
+                        'text': raw_text
+                    }
+                ]
+            }
+        ]
+        
+        completion = client.chat.completions.create(
+            model='llama-3.2-90b-vision-preview',
+            messages=messages,
+            temperature=0,
+            max_completion_tokens=1024,
+            top_p=1,
+            stream=False,
+            stop=None
+        )
+        
+        result = completion.choices[0].message.content
+        return {"extracted-text": result}
+        
+    except Exception as e:
+        return {"extracted-text": f"Error: {str(e)}"}
