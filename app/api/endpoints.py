@@ -379,3 +379,39 @@ async def get_from_s3():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
+
+# Pydantic schema for the chat route
+class Ask(BaseModel):
+    question: str
+    previous_convo: list[list[str]]
+
+# endpoit for /ask
+async def ask_question(request: Ask):
+    try:
+        from groq import Groq
+        client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        completion = client.chat.completions.create(
+            model="gemma2-9b-it",
+            messages=[
+                {"role": "user", "content": "Based on the Previous Conversations held by the users, understand the chat context and generate the result, the previous conversation is an optional field. Please format your response as JSON." },
+                {"role": "user", "content": f"Question: {request.question}"},
+                {"role": "user", "content": f"Previous Conversation: {request.previous_convo}"}
+            ],
+            temperature=1,
+            max_tokens=1024,
+            top_p=1,
+            stream=False, # to get full response at once
+            response_format={"type": "json_object"},
+            stop=None,
+        )
+
+        answer = completion.choices[0].message.content if completion.choices else None
+        if answer:
+            return {"answer": answer}
+        else:
+            raise HTTPException(status_code=500, detail="No response, try again")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating response: {e}")
+
+        
