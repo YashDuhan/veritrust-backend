@@ -4,3 +4,4 @@ python-dotenv
 groq
 python-multipart
 playwright
+requests

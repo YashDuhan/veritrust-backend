@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, File
-from .endpoints import root, health_check, check_image, check_url,manual_check, check_raw ,suggestions, check_health
+from .endpoints import root, health_check, check_image, check_url,manual_check, check_raw ,suggestions, check_health, get_from_s3
 
 app_router = APIRouter()
 
@@ -26,3 +26,6 @@ app_router.post("/suggestions")(suggestions)
 
 # Check User's health
 app_router.post("/check-health")(check_health)
+
+# Get Explore data from S3
+app_router.get("/get-from-s3")(get_from_s3)

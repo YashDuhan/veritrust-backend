@@ -2,8 +2,9 @@ from fastapi import UploadFile, File, HTTPException
 from pydantic import BaseModel, Field, validator
 import os
 import base64
-from .url.url_logic import process_url_request
+import requests
 import json
+from .url.url_logic import process_url_request
 
 # Manual check model 
 class ManualInput(BaseModel):
@@ -361,3 +362,20 @@ async def check_health(health_data: HealthCheckInput):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# Get data from S3
+S3_URL = "https://explore-veritrust.s3.eu-north-1.amazonaws.com/v01/data.json"
+
+async def get_from_s3():
+    try:
+        # Fetch the data from S3
+        response = requests.get(S3_URL)
+        response.raise_for_status()
+        
+        # Parse and return the JSON data
+        data = response.json()
+        return {"data": data}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
